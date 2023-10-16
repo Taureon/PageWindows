@@ -36,6 +36,7 @@ window.addEventListener('resize', () => {
 	for (let i = 0; i < instances.length; i++) {
 		let instance = instances[i];
 		if (instance.frozen) continue;
+		//TODO: move relevant instance windows
 	}
 });
 
@@ -83,11 +84,12 @@ class PageWindow {
 		this.elementHead = createElement('div', defaultStyles.head, { /*make draggable*/ }, [ this.elementIcon, this.elementTitle, this.elementButtonHolder ]);
 		this.elementMain = createElement('div', mergeObjects(defaultStyles.main, { 'z-index': highestZIndex++ }), {}, [ this.elementHead, this.elementContent ]);
 
+		document.body.append(this.elementMain);
 		instances.push(this);
 	}
 
-	set x(x) { this.X = x; }
-	set y(y) { this.Y = y; }
+	set x(x) { this.X = x; } //TODO: make sure window stays inside tab window
+	set y(y) { this.Y = y; } //TODO: make sure window stays inside tab window
 
 	destroy() {
 		if (this.isDestroyed) throw new Error('Cannot destroy an already destroyed PageWindow.');
