@@ -1,11 +1,12 @@
 let instances = [],
 	highestZIndex = 0,
+	currentInstance = null,
 
 defaultStyles = {
 	main: {},
 	head: { height: '30px', padding: '5px' },
 	icon: { width: '16px', height: '16px' },
-	title: {},
+	title: { height: '50px' },
 	button: { wdith: '16px', height: '16px', margin: '4px', 'margin-right': '0px' },
 	content: { width: '100%', height: '100%'},
 	buttonHolder: { 'padding-right': '4px' }
@@ -30,15 +31,36 @@ createElement = (type, style = {}, attributes = {}, children = []) => {
     applyAttrbutes(element, attributes);
     for (let child of children) element.append(child);
     return element;
+},
+
+clampWindowPositions = () => {
+	for (let i = 0; i < instances.length; i++) {
+		if (!instances[i].frozen) {
+
+			//this code activates setters
+			instances[i].x *= 1;
+			instances[i].y *= 1;
+		}
+	}
 };
 
-window.addEventListener('resize', () => {
-	for (let i = 0; i < instances.length; i++) {
-		let instance = instances[i];
-		if (instance.frozen) continue;
-		//TODO: move relevant instance windows
-	}
-});
+window.addEventListener('resize', clampWindowPositions);
+
+document.onmousemove = mouseEvent => {
+
+    //future proofing
+    if (!mouseEvent.isTrusted) return;
+
+    for (let movableWindow of movableWindows) {
+        if (movableWindow.enable) {
+            applyStyle(movableWindow.element, {
+                left: (mouseEvent.clientX - movableWindow.offsetX) + 'px',
+                top: (mouseEvent.clientY - movableWindow.offsetY) + 'px'
+            });
+        }
+    }
+    clampWindowPositions();
+};
 
 class PageWindow {
 	static defaultWidth = 300;
@@ -59,8 +81,8 @@ class PageWindow {
 		horizontalOrigin = "center",
 	}) {
 
-		this.X = x;
-		this.Y = y;
+		this.x = x;
+		this.y = y;
 		this.width = width;
 		this.height = height;
 		this.frozen = frozen;
@@ -82,16 +104,20 @@ class PageWindow {
 		this.elementTitle = createElement('div', defaultStyles.title, { innerText: title });
 		this.elementIcon = createElement('div', defaultStyles.icon, {}, [ icon ]);
 		this.elementHead = createElement('div', defaultStyles.head, { /*make draggable*/ }, [ this.elementIcon, this.elementTitle, this.elementButtonHolder ]);
-		this.elementMain = createElement('div', mergeObjects(defaultStyles.main, { 'z-index': highestZIndex++ }), {}, [ this.elementHead, this.elementContent ]);
+		this.elementMain = createElement('div', mergeObjects(defaultStyles.main, { width: width + 'px', height: height + 'px', 'z-index': highestZIndex++ }), {}, [ this.elementHead, this.elementContent ]);
 
 		document.body.append(this.elementMain);
 		instances.push(this);
 	}
 
-	set x(x) { this.X = x; } //TODO: make sure window stays inside tab window
-	set y(y) { this.Y = y; } //TODO: make sure window stays inside tab window
+	get x() { return this.X; }
+	set x(x) { return this.X = x; } //TODO: make sure window stays inside tab window
+	get y() { return this.Y; }
+	set y(y) { return this.Y = y; } //TODO: make sure window stays inside tab window
 
-	destroy() {
+	clampPosition () {}
+
+	destroy () {
 		if (this.isDestroyed) throw new Error('Cannot destroy an already destroyed PageWindow.');
 		this.isDestroyed = true;
 
